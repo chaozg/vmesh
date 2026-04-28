@@ -21,6 +21,7 @@
   color-map: default-color-map,
   show-node-numbers: false,
   show-element-numbers: false,
+  show-axes: false,
   number-size: 6pt
 ) = layout(size => {
   let mesh-data = parse-msh(msh-string)
@@ -72,6 +73,40 @@
   // so just updating the coordinates directly using local lengths works!
   cetz.canvas(length: scale-len, {
     import cetz.draw: *
+    
+    if show-axes {
+      // Background Grid
+      let tick-count = 5
+      let x-step = dx / tick-count
+      let y-step = dy / tick-count
+      
+      // Draw grid lines
+      for i in range(tick-count + 1) {
+        let tx = min-x + i * x-step
+        line((tx, min-y), (tx, max-y), stroke: 0.3pt + luma(200))
+      }
+      for i in range(tick-count + 1) {
+        let ty = min-y + i * y-step
+        line((min-x, ty), (max-x, ty), stroke: 0.3pt + luma(200))
+      }
+      
+      // Bounding box
+      rect((min-x, min-y), (max-x, max-y), stroke: 0.8pt + black)
+      
+      // Ticks and labels
+      let tick-len-x = dx * 0.02
+      let tick-len-y = dy * 0.02
+      for i in range(tick-count + 1) {
+        let tx = min-x + i * x-step
+        line((tx, min-y), (tx, min-y - tick-len-y), stroke: 0.5pt + black)
+        content((tx, min-y - tick-len-y * 2.5), text(size: 8pt)[#calc.round(tx, digits: 2)])
+      }
+      for i in range(tick-count + 1) {
+        let ty = min-y + i * y-step
+        line((min-x, ty), (min-x - tick-len-x, ty), stroke: 0.5pt + black)
+        content((min-x - tick-len-x * 3.5, ty), text(size: 8pt)[#calc.round(ty, digits: 2)])
+      }
+    }
     
     for elm in elements {
       let elm-type = elm.type

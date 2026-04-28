@@ -5,16 +5,26 @@
 // Ensure you have generated the \`.msh\` file using MSH 2.2 format:
 // \`gmsh t1.geo -2 -format msh2 -o t1.msh\`
 
+#set page(paper: "a5",
+          // width: auto,
+          // height: auto, 
+)
+
+#lorem(25)
+
 #align(center)[
-  #let mesh-data = read("m1.msh2")
-  #let my-colors = ("1": black.lighten(80%), "22": purple, "3": blue)
+  #let mesh-data = read("t4.msh2")
+  #let my-colors = ("24": green.lighten(20%), "22": blue.lighten(20%), "3": blue)
   #draw-mesh(mesh-data,
-             width: 15cm,
+             width: 8cm,
              height: auto,
-             mesh-stroke: 0.2pt + black,
-            //  color-map: my-colors,
-             show-node-numbers: true,
-             show-element-numbers: true,
-             number-size: 8pt
+             mesh-stroke: 0.05pt + gray,
+             color-map: my-colors,
+             show-node-numbers: false,
+             show-element-numbers: false,
+             number-size: 8pt,
+            //  show-axes: true,
              )
 ]
+
+#lorem(50)
