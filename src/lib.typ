@@ -239,6 +239,11 @@
 
         if elm-nodes-proj.len() == fd.nodes.len() and elm-nodes-proj.len() > 0 {
           let depth = elm-nodes-proj.map(c => c.at(1)).sum() / elm-nodes-proj.len()
+          
+          // Nudge depth slightly so 1D lines draw on top of 2D surfaces when they are perfectly flat
+          if fd.type == 1 {
+            depth += 0.001
+          }
           let pts = elm-nodes-proj.map(c => c.at(0))
           
           let final-fill = fd.fill
