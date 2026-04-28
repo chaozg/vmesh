@@ -32,7 +32,7 @@
     
     if in-nodes {
       // Node format: node_id x y z
-      let parts = line.split(" ").filter(p => p != "")
+      let parts = line.split(regex("\\s+")).filter(p => p != "")
       if parts.len() >= 4 {
         let id = str(int(parts.at(0)))
         let x = float(parts.at(1))
@@ -44,7 +44,7 @@
     
     if in-elements {
       // Element format: elm_id elm_type num_tags <tags> node1 node2 ...
-      let parts = line.split(" ").filter(p => p != "")
+      let parts = line.split(regex("\\s+")).filter(p => p != "")
       if parts.len() >= 3 {
         let elm-id = int(parts.at(0))
         let elm-type = int(parts.at(1))

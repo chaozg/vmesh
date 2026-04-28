@@ -28,19 +28,13 @@
   let nodes = mesh-data.nodes
   let elements = mesh-data.elements
 
-  let min-x = 99999999.0
-  let max-x = -99999999.0
-  let min-y = 99999999.0
-  let max-y = -99999999.0
+  let x-vals = nodes.values().map(n => float(n.at(0)))
+  let y-vals = nodes.values().map(n => float(n.at(1)))
 
-  for (n-id, n-data) in nodes.pairs() {
-    let x = float(n-data.at(0))
-    let y = float(n-data.at(1))
-    if x < min-x { min-x = x }
-    if x > max-x { max-x = x }
-    if y < min-y { min-y = y }
-    if y > max-y { max-y = y }
-  }
+  let min-x = if x-vals.len() > 0 { calc.min(..x-vals) } else { 0.0 }
+  let max-x = if x-vals.len() > 0 { calc.max(..x-vals) } else { 1.0 }
+  let min-y = if y-vals.len() > 0 { calc.min(..y-vals) } else { 0.0 }
+  let max-y = if y-vals.len() > 0 { calc.max(..y-vals) } else { 1.0 }
 
   let dx = max-x - min-x
   let dy = max-y - min-y
@@ -120,70 +114,28 @@
         elm-fill = color-map.at(str(domain-id), default: blue.lighten(20%))
       }
 
-      let cx = 0.0
-      let cy = 0.0
-      let valid-nodes = 0
-      for n-id in elm-node-ids {
-        let n-data = nodes.at(n-id, default: none)
-        if n-data != none {
-          cx += n-data.at(0)
-          cy += n-data.at(1)
-          valid-nodes += 1
+      let elm-coords = elm-node-ids.map(id => nodes.at(id, default: none)).filter(c => c != none)
+
+      if elm-coords.len() == elm-node-ids.len() and elm-coords.len() > 0 {
+        let pts = elm-coords.map(c => (c.at(0), c.at(1)))
+
+        if elm-type == 1 and pts.len() == 2 {
+          line(..pts, stroke: mesh-stroke)
+        } else if (elm-type == 2 and pts.len() == 3) or (elm-type == 3 and pts.len() == 4) {
+          line(..pts, close: true, stroke: mesh-stroke, fill: elm-fill)
         }
-      }
 
-      // Type 1: 2-node line
-      if elm-type == 1 and elm-node-ids.len() == 2 {
-        let n1 = nodes.at(elm-node-ids.at(0), default: none)
-        let n2 = nodes.at(elm-node-ids.at(1), default: none)
-
-        if n1 != none and n2 != none {
-          line((n1.at(0), n1.at(1)), (n2.at(0), n2.at(1)), stroke: mesh-stroke)
+        if show-element-numbers {
+          let cx = elm-coords.map(c => c.at(0)).sum() / pts.len()
+          let cy = elm-coords.map(c => c.at(1)).sum() / pts.len()
+          content((cx, cy), text(size: number-size, fill: luma(80), style: "italic")[#elm.id])
         }
-      } // Type 2: 3-node triangle
-      else if elm-type == 2 and elm-node-ids.len() == 3 {
-        let n1 = nodes.at(elm-node-ids.at(0), default: none)
-        let n2 = nodes.at(elm-node-ids.at(1), default: none)
-        let n3 = nodes.at(elm-node-ids.at(2), default: none)
-
-        if n1 != none and n2 != none and n3 != none {
-          line(
-            (n1.at(0), n1.at(1)),
-            (n2.at(0), n2.at(1)),
-            (n3.at(0), n3.at(1)),
-            close: true,
-            stroke: mesh-stroke,
-            fill: elm-fill,
-          )
-        }
-      } // Type 3: 4-node quadrangle
-      else if elm-type == 3 and elm-node-ids.len() == 4 {
-        let n1 = nodes.at(elm-node-ids.at(0), default: none)
-        let n2 = nodes.at(elm-node-ids.at(1), default: none)
-        let n3 = nodes.at(elm-node-ids.at(2), default: none)
-        let n4 = nodes.at(elm-node-ids.at(3), default: none)
-
-        if n1 != none and n2 != none and n3 != none and n4 != none {
-          line(
-            (n1.at(0), n1.at(1)),
-            (n2.at(0), n2.at(1)),
-            (n3.at(0), n3.at(1)),
-            (n4.at(0), n4.at(1)),
-            close: true,
-            stroke: mesh-stroke,
-            fill: elm-fill,
-          )
-        }
-      }
-
-      if show-element-numbers and valid-nodes > 0 {
-        content((cx / valid-nodes, cy / valid-nodes), text(size: number-size, fill: black)[#elm.id])
       }
     }
 
     if show-node-numbers {
       for (n-id, n-data) in nodes.pairs() {
-        content((n-data.at(0), n-data.at(1)), text(size: number-size, fill: red, weight: "bold")[#n-id])
+        content((n-data.at(0), n-data.at(1)), text(size: number-size, fill: black, weight: "bold")[#n-id])
       }
     }
   })
