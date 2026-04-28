@@ -38,11 +38,11 @@
   yaw: 0deg,
   use-lighting: true,
   light-direction: (-0.5, -0.5, 0.707),
-  show-node-numbers: false,
-  show-element-numbers: false,
-  show-domain-numbers: false,
+  show-node-ids: false,
+  show-element-ids: false,
+  show-domain-ids: false,
   show-axes: false,
-  number-size: 6pt,
+  id-size: 6pt,
 ) = layout(size => {
   let mesh-data = parse-msh(msh-string)
   let nodes = mesh-data.nodes
@@ -324,7 +324,7 @@
       }
     }
 
-    if show-domain-numbers {
+    if show-domain-ids {
       let domain-centers = (:)
       for elm in elements {
         let p-tag = elm.physical-tag
@@ -368,7 +368,7 @@
       let elm-fill = re.elm-fill
 
       if elm-type == "domain-label" {
-        content(pts.at(0), box(fill: white.transparentize(20%), inset: 2pt, radius: 2pt, text(size: number-size * 1.5, fill: elm-fill, weight: "bold")[#re.elm-id]))
+        content(pts.at(0), box(fill: white.transparentize(20%), inset: 2pt, radius: 2pt, text(size: id-size * 1.5, fill: elm-fill, weight: "bold")[#re.elm-id]))
       } else if elm-type == "axis" {
         line(pts.at(0), pts.at(1), stroke: 1.5pt + elm-fill)
         content(pts.at(2), text(size: 10pt, fill: elm-fill, weight: "bold")[#re.elm-id])
@@ -379,16 +379,16 @@
         line(..pts, close: true, stroke: mesh-stroke, fill: elm-fill)
       }
 
-      if show-element-numbers {
+      if show-element-ids {
         let cx = pts.map(c => c.at(0)).sum() / pts.len()
         let cy = pts.map(c => c.at(1)).sum() / pts.len()
-        content((cx, cy), text(size: number-size, fill: luma(80), style: "italic")[#re.elm-id])
+        content((cx, cy), text(size: id-size, fill: luma(80), style: "italic")[#re.elm-id])
       }
     }
 
-    if show-node-numbers {
+    if show-node-ids {
       for (n-id, n-data) in projected-nodes.pairs() {
-        content(n-data.at(0), text(size: number-size, fill: black, weight: "bold")[#n-id])
+        content(n-data.at(0), text(size: id-size, fill: black, weight: "bold")[#n-id])
       }
     }
   })
