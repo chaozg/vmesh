@@ -36,6 +36,8 @@
   edge-stroke-map: (:),
   pitch: 0deg,
   yaw: 0deg,
+  use-lighting: true,
+  light-direction: (-0.5, -0.5, 0.707),
   show-node-numbers: false,
   show-element-numbers: false,
   show-axes: false,
@@ -90,42 +92,65 @@
   cetz.canvas(length: scale-len, {
     import cetz.draw: *
 
-    if show-axes {
-      // Background Grid
-      let tick-count = 5
-      let x-step = dx / tick-count
-      let y-step = dy / tick-count
-
-      // Draw grid lines
-      for i in range(tick-count + 1) {
-        let tx = min-x + i * x-step
-        line((tx, min-y), (tx, max-y), stroke: 0.3pt + luma(200))
-      }
-      for i in range(tick-count + 1) {
-        let ty = min-y + i * y-step
-        line((min-x, ty), (max-x, ty), stroke: 0.3pt + luma(200))
-      }
-
-      // Bounding box
-      rect((min-x, min-y), (max-x, max-y), stroke: 0.8pt + black)
-
-      // Ticks and labels
-      let tick-len-x = dx * 0.02
-      let tick-len-y = dy * 0.02
-      for i in range(tick-count + 1) {
-        let tx = min-x + i * x-step
-        line((tx, min-y), (tx, min-y - tick-len-y), stroke: 0.5pt + black)
-        content((tx, min-y - tick-len-y * 2.5), text(size: 8pt)[#calc.round(tx, digits: 2)])
-      }
-      for i in range(tick-count + 1) {
-        let ty = min-y + i * y-step
-        line((min-x, ty), (min-x - tick-len-x, ty), stroke: 0.5pt + black)
-        content((min-x - tick-len-x * 3.5, ty), text(size: 8pt)[#calc.round(ty, digits: 2)])
-      }
-    }
-
     let render-elements = ()
     let all-faces = ()
+
+    if show-axes {
+       let w-x-vals = nodes.values().map(n => float(n.at(0)))
+       let w-y-vals = nodes.values().map(n => float(n.at(1)))
+       let w-z-vals = nodes.values().map(n => float(n.at(2)))
+       
+       let w-min-x = if w-x-vals.len() > 0 { calc.min(..w-x-vals) } else { 0.0 }
+       let w-max-x = if w-x-vals.len() > 0 { calc.max(..w-x-vals) } else { 1.0 }
+       let w-min-y = if w-y-vals.len() > 0 { calc.min(..w-y-vals) } else { 0.0 }
+       let w-max-y = if w-y-vals.len() > 0 { calc.max(..w-y-vals) } else { 1.0 }
+       let w-min-z = if w-z-vals.len() > 0 { calc.min(..w-z-vals) } else { 0.0 }
+       let w-max-z = if w-z-vals.len() > 0 { calc.max(..w-z-vals) } else { 1.0 }
+       
+       let len-x = w-max-x - w-min-x
+       if len-x <= 0 { len-x = 1.0 }
+       let len-y = w-max-y - w-min-y
+       if len-y <= 0 { len-y = 1.0 }
+       let len-z = w-max-z - w-min-z
+       if len-z <= 0 { len-z = 1.0 }
+       
+       let pt-origin = (w-min-x, w-min-y, w-min-z)
+       let pt-x = (w-max-x + len-x * 0.2, w-min-y, w-min-z)
+       let pt-y = (w-min-x, w-max-y + len-y * 0.2, w-min-z)
+       let pt-z = (w-min-x, w-min-y, w-max-z + len-z * 0.2)
+       
+       let p-o = project-3d(pt-origin, pitch, yaw)
+       
+       let p-x = project-3d(pt-x, pitch, yaw)
+       render-elements.push((
+         depth: (p-o.at(1) + p-x.at(1)) / 2.0,
+         pts: (p-o.at(0), p-x.at(0)),
+         elm-type: "axis",
+         domain-id: 0,
+         elm-fill: red.darken(20%),
+         elm-id: "X"
+       ))
+       
+       let p-y = project-3d(pt-y, pitch, yaw)
+       render-elements.push((
+         depth: (p-o.at(1) + p-y.at(1)) / 2.0,
+         pts: (p-o.at(0), p-y.at(0)),
+         elm-type: "axis",
+         domain-id: 0,
+         elm-fill: green.darken(20%),
+         elm-id: "Y"
+       ))
+       
+       let p-z = project-3d(pt-z, pitch, yaw)
+       render-elements.push((
+         depth: (p-o.at(1) + p-z.at(1)) / 2.0,
+         pts: (p-o.at(0), p-z.at(0)),
+         elm-type: "axis",
+         domain-id: 0,
+         elm-fill: blue.darken(20%),
+         elm-id: "Z"
+       ))
+    }
 
     for elm in elements {
       let elm-type = elm.type
@@ -202,12 +227,83 @@
           let depth = elm-nodes-proj.map(c => c.at(1)).sum() / elm-nodes-proj.len()
           let pts = elm-nodes-proj.map(c => c.at(0))
           
+          let final-fill = fd.fill
+          if use-lighting and fd.fill != none and fd.nodes.len() >= 3 {
+            let n0 = nodes.at(fd.nodes.at(0))
+            let n1 = nodes.at(fd.nodes.at(1))
+            let n2 = nodes.at(fd.nodes.at(2))
+            
+            let ax = float(n1.at(0)) - float(n0.at(0))
+            let ay = float(n1.at(1)) - float(n0.at(1))
+            let az = float(n1.at(2)) - float(n0.at(2))
+            
+            let bx = float(n2.at(0)) - float(n0.at(0))
+            let by = float(n2.at(1)) - float(n0.at(1))
+            let bz = float(n2.at(2)) - float(n0.at(2))
+            
+            let nx = ay * bz - az * by
+            let ny = az * bx - ax * bz
+            let nz = ax * by - ay * bx
+            
+            let len = calc.sqrt(nx * nx + ny * ny + nz * nz)
+            if len == 0 { len = 1.0 }
+            nx = nx / len
+            ny = ny / len
+            nz = nz / len
+            
+            // Find camera view vector
+            let cam-x = calc.sin(yaw) * calc.sin(pitch)
+            let cam-y = calc.cos(yaw) * calc.sin(pitch)
+            let cam-z = calc.cos(pitch)
+            
+            // Flip normal to face the camera (handles arbitrary winding order)
+            if (nx * cam-x + ny * cam-y + nz * cam-z) < 0 {
+              nx = -nx
+              ny = -ny
+              nz = -nz
+            }
+            
+            let lx = 0.0
+            let ly = 0.0
+            let lz = 1.0
+            
+            if light-direction == auto {
+              // Fallback if user explicitly requests auto
+              let cam-x = calc.sin(yaw) * calc.sin(pitch)
+              let cam-y = calc.cos(yaw) * calc.sin(pitch)
+              let cam-z = calc.cos(pitch)
+              lx = cam-x
+              ly = cam-y
+              lz = cam-z
+            } else {
+              let (dir-x, dir-y, dir-z) = light-direction
+              lx = dir-x
+              ly = dir-y
+              lz = dir-z
+            }
+            
+            let llen = calc.sqrt(lx * lx + ly * ly + lz * lz)
+            if llen == 0 { llen = 1.0 }
+            lx = lx / llen
+            ly = ly / llen
+            lz = lz / llen
+            
+            let dot = nx * lx + ny * ly + nz * lz
+            if dot < 0 { dot = 0.0 }
+            
+            let ambient = 0.3
+            let diffuse = 0.7 * dot
+            let factor = ambient + diffuse
+            
+            final-fill = final-fill.darken((1.0 - factor) * 100%)
+          }
+
           render-elements.push((
             depth: depth,
             pts: pts,
             elm-type: fd.type,
             domain-id: fd.domain,
-            elm-fill: fd.fill,
+            elm-fill: final-fill,
             elm-id: fd.id
           ))
         }
@@ -222,7 +318,10 @@
       let domain-id = re.domain-id
       let elm-fill = re.elm-fill
 
-      if elm-type == 1 and pts.len() == 2 {
+      if elm-type == "axis" {
+        line(..pts, stroke: 1.5pt + elm-fill)
+        content(pts.at(1), text(size: 10pt, fill: elm-fill, weight: "bold")[#re.elm-id])
+      } else if elm-type == 1 and pts.len() == 2 {
         let e-stroke = edge-stroke-map.at(str(domain-id), default: mesh-stroke)
         line(..pts, stroke: e-stroke)
       } else if (elm-type == 2 and pts.len() == 3) or (elm-type == 3 and pts.len() == 4) {
