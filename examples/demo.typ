@@ -1,4 +1,4 @@
-#import "lib.typ": draw-mesh
+#import "../src/lib.typ": draw-mesh
 #import "@preview/subpar:0.2.2"
 
 #set page(
@@ -8,32 +8,33 @@
 )
 #set par(justify: true)
 
-Make sure you have generated the `.msh` file using Gmsh's `.msh` 2.2 format with
-\`gmsh t1.geo -2 -format msh2 -o t1.msh\`.
+Make sure you have generated the `.msh2` file using Gmsh's 2.2 format with
+\`gmsh t1.geo -2 -format msh2 -o t1.msh2\`.
 
-The Mesh package allows one to read a `.msh` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
+The Mesh package allows one to read a `.msh2` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
 
-// #let mesh-data = read("t4.msh2")
-#let mesh-data = read("triangleHole01.msh2")
+// #let mesh-data = read("../assets/t4.msh2")
+// #let mesh-data = read("../assets/triangleHole01.msh2")
+#let mesh-data = read("../assets/typst_background.msh2")
 
 #figure(
   draw-mesh(
     mesh-data,
-    width: 4.5cm,
+    width: 1.5cm,
     height: auto,
-    // mesh-stroke: 0.05pt + white,
+    mesh-stroke: 0.01pt + white,
     // color-map: my-colors,
     // show-node-ids: true,
     // show-element-ids: true,
     id-size: 5pt,
-    show-axes: true,
+    // show-axes: true,
   ),
-  caption: [A demo `.msh` file (`t4.msh2`) from Gmsh.],
+  caption: [A demo `.msh2` file (`t4.msh2`) from Gmsh.],
 ) <my-mesh-plot>
 
 As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded and rendered. As shown in @my-mesh-plot-2, we can also turn on the display of node and element numbers.
 
-#let mesh-data-2 = read("m1.msh2")
+#let mesh-data-2 = read("../assets/m1.msh2")
 #let my-colors = ("1": blue.lighten(20%), "2": red.lighten(20%), "3": green.lighten(20%))
 #let my-edges = ("4": 4pt + red, "5": 4pt + purple, "6": 4pt + green)
 
@@ -43,7 +44,7 @@ As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded an
     width: 5.5cm,
     height: auto,
     edge-stroke-map: my-edges,
-    mesh-stroke: 0.05pt + black,
+    mesh-stroke: 0.05pt + white,
     // color-map: my-colors,
     // show-domain-ids: true,
     show-node-ids: true,
@@ -56,10 +57,10 @@ As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded an
 
 As shown in @my-mesh-plot-3, the package also supports true 3D meshes using an automatic surface extraction algorithm!
 
-#let mesh-data-3 = read("t14.msh2")
-#let mesh-data-4 = read("t5.msh2")
-#let mesh-data-5 = read("ball8.msh2")
-#let mesh-data-6 = read("part_sphere.msh2")
+#let mesh-data-3 = read("../assets/t14.msh2")
+#let mesh-data-4 = read("../assets/t5.msh2")
+#let mesh-data-5 = read("../assets/ball8.msh2")
+#let mesh-data-6 = read("../assets/part_sphere.msh2")
 
 #figure(
   draw-mesh(
@@ -75,7 +76,7 @@ As shown in @my-mesh-plot-3, the package also supports true 3D meshes using an a
     show-node-ids: false,
     show-element-ids: false,
   ),
-  caption: [A demo `.msh` file (`t3.msh`) projected in 3D with realistic lighting.],
+  caption: [A demo `.msh2` file (`t3.msh2`) projected in 3D with realistic lighting.],
 ) <my-mesh-plot-3>
 
 #subpar.grid(
@@ -140,6 +141,6 @@ As shown in @my-mesh-plot-3, the package also supports true 3D meshes using an a
   <b>,
 
   columns: (1fr, 1fr, 1fr),
-  caption: [A figure composed of two sub figures.],
+  caption: [3D meshes.],
   label: <full>,
 )
