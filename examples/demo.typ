@@ -9,34 +9,34 @@
 #set par(justify: true)
 
 Make sure you have generated the `.msh2` file using Gmsh's 2.2 format with
-\`gmsh t1.geo -2 -format msh2 -o t1.msh2\`.
+\`gmsh typst.geo -2 -format msh2 -o typst.msh2\`.
 
 The Mesh package allows one to read a `.msh2` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
 
 // #let mesh-data = read("../assets/t4.msh2")
 // #let mesh-data = read("../assets/triangleHole01.msh2")
-#let mesh-data = read("../assets/typst_background.msh2")
+#let mesh-data = read("../assets/typst.msh2")
 
 #figure(
   draw-mesh(
     mesh-data,
     width: 1.5cm,
-    height: auto,
-    mesh-stroke: 0.01pt + white,
+    // height: auto,
+    // mesh-stroke: 0.3pt + white,
     // color-map: my-colors,
     // show-node-ids: true,
     // show-element-ids: true,
-    id-size: 5pt,
+    // id-size: 5pt,
     // show-axes: true,
   ),
-  caption: [A demo `.msh2` file (`t4.msh2`) from Gmsh.],
+  // caption: [A demo `.msh2` file (`t4.msh2`) from Gmsh.],
 ) <my-mesh-plot>
 
 As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded and rendered. As shown in @my-mesh-plot-2, we can also turn on the display of node and element numbers.
 
 #let mesh-data-2 = read("../assets/m1.msh2")
 #let my-colors = ("1": blue.lighten(20%), "2": red.lighten(20%), "3": green.lighten(20%))
-#let my-edges = ("4": 4pt + red, "5": 4pt + purple, "6": 4pt + green)
+#let my-edges = ("4": 1pt + red, "5": 1pt + purple, "6": 1pt + green)
 
 #figure(
   draw-mesh(
@@ -44,13 +44,13 @@ As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded an
     width: 5.5cm,
     height: auto,
     edge-stroke-map: my-edges,
-    mesh-stroke: 0.05pt + white,
+    mesh-stroke: 0.1pt + white,
     // color-map: my-colors,
     // show-domain-ids: true,
     show-node-ids: true,
     show-element-ids: true,
     id-size: 7pt,
-    show-axes: true,
+    // show-axes: true,
   ),
   caption: [A demo `.msh` file (`m1.msh2`) with highlighted boundaries.],
 ) <my-mesh-plot-2>
@@ -141,6 +141,6 @@ As shown in @my-mesh-plot-3, the package also supports true 3D meshes using an a
   <b>,
 
   columns: (1fr, 1fr, 1fr),
-  caption: [3D meshes.],
+  // caption: [3D meshes.],
   label: <full>,
 )
