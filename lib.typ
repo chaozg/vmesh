@@ -12,12 +12,65 @@
   "5": purple.lighten(30%),
 )
 
-#let draw-mesh(msh-string, scale-factor: 1.0, mesh-stroke: 0.5pt + black, fill-elements: true, color-map: default-color-map) = {
+#let draw-mesh(
+  msh-string, 
+  width: auto,
+  height: auto,
+  mesh-stroke: 0.5pt + black, 
+  fill-elements: true, 
+  color-map: default-color-map,
+  show-node-numbers: false,
+  show-element-numbers: false,
+  number-size: 6pt
+) = layout(size => {
   let mesh-data = parse-msh(msh-string)
   let nodes = mesh-data.nodes
   let elements = mesh-data.elements
   
-  cetz.canvas({
+  let min-x = 99999999.0
+  let max-x = -99999999.0
+  let min-y = 99999999.0
+  let max-y = -99999999.0
+  
+  for (n-id, n-data) in nodes.pairs() {
+    let x = float(n-data.at(0))
+    let y = float(n-data.at(1))
+    if x < min-x { min-x = x }
+    if x > max-x { max-x = x }
+    if y < min-y { min-y = y }
+    if y > max-y { max-y = y }
+  }
+  
+  let dx = max-x - min-x
+  let dy = max-y - min-y
+  if dx <= 0 { dx = 1.0 }
+  if dy <= 0 { dy = 1.0 }
+  
+  let scale-len = 1cm
+  
+  // Convert relative ratios or fractions to absolute lengths based on container layout
+  let resolve-len(l, ref-size) = {
+    if type(l) == ratio { (l / 100%) * ref-size }
+    else { l }
+  }
+
+  let final-width = if width == auto { resolve-len(100%, size.width) } else { resolve-len(width, size.width) }
+  let final-height = if height != auto { resolve-len(height, size.height) } else { none }
+
+  if height != auto and width != auto {
+    scale-len = calc.min(final-width / dx, final-height / dy)
+  } else if height != auto {
+    scale-len = final-height / dy
+  } else {
+    // Default: Fit to width
+    scale-len = final-width / dx
+  }
+
+  // To perfectly autogen boundaries relative to origin, we can also auto-center the grid
+  // by calculating the bounding box offset. We'll wrap all drawing commands in a group
+  // shifted by the center. But CetZ automatically tightens bounding boxes on compilation,
+  // so just updating the coordinates directly using local lengths works!
+  cetz.canvas(length: scale-len, {
     import cetz.draw: *
     
     for elm in elements {
@@ -33,14 +86,26 @@
         elm-fill = color-map.at(str(domain-id), default: gray.lighten(50%))
       }
       
+      let cx = 0.0
+      let cy = 0.0
+      let valid-nodes = 0
+      for n-id in elm-node-ids {
+        let n-data = nodes.at(n-id, default: none)
+        if n-data != none {
+          cx += n-data.at(0) 
+          cy += n-data.at(1) 
+          valid-nodes += 1
+        }
+      }
+      
       // Type 1: 2-node line
       if elm-type == 1 and elm-node-ids.len() == 2 {
         let n1 = nodes.at(elm-node-ids.at(0), default: none)
         let n2 = nodes.at(elm-node-ids.at(1), default: none)
         
         if n1 != none and n2 != none {
-          line((n1.at(0) * scale-factor, n1.at(1) * scale-factor), 
-               (n2.at(0) * scale-factor, n2.at(1) * scale-factor),
+          line((n1.at(0) , n1.at(1) ), 
+               (n2.at(0) , n2.at(1) ),
                stroke: mesh-stroke)
         }
       }
@@ -52,9 +117,9 @@
         let n3 = nodes.at(elm-node-ids.at(2), default: none)
         
         if n1 != none and n2 != none and n3 != none {
-          line((n1.at(0) * scale-factor, n1.at(1) * scale-factor), 
-               (n2.at(0) * scale-factor, n2.at(1) * scale-factor),
-               (n3.at(0) * scale-factor, n3.at(1) * scale-factor),
+          line((n1.at(0) , n1.at(1) ), 
+               (n2.at(0) , n2.at(1) ),
+               (n3.at(0) , n3.at(1) ),
                close: true,
                stroke: mesh-stroke,
                fill: elm-fill)
@@ -69,15 +134,25 @@
         let n4 = nodes.at(elm-node-ids.at(3), default: none)
         
         if n1 != none and n2 != none and n3 != none and n4 != none {
-          line((n1.at(0) * scale-factor, n1.at(1) * scale-factor), 
-               (n2.at(0) * scale-factor, n2.at(1) * scale-factor),
-               (n3.at(0) * scale-factor, n3.at(1) * scale-factor),
-               (n4.at(0) * scale-factor, n4.at(1) * scale-factor),
+          line((n1.at(0) , n1.at(1) ), 
+               (n2.at(0) , n2.at(1) ),
+               (n3.at(0) , n3.at(1) ),
+               (n4.at(0) , n4.at(1) ),
                close: true,
                stroke: mesh-stroke,
                fill: elm-fill)
         }
       }
+      
+      if show-element-numbers and valid-nodes > 0 {
+        content((cx / valid-nodes, cy / valid-nodes), text(size: number-size, fill: black)[#elm.id])
+      }
+    }
+    
+    if show-node-numbers {
+      for (n-id, n-data) in nodes.pairs() {
+        content((n-data.at(0) , n-data.at(1) ), text(size: number-size, fill: red, weight: "bold")[#n-id])
+      }
     }
   })
-}
+})

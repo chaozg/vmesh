@@ -2,8 +2,7 @@
 // Parses Gmsh .msh files (MSH 2.2 ASCII format)
 
 #let parse-msh(msh-string) = {
-  let clean-string = msh-string.replace("\r", "")
-  let lines = clean-string.split("\n").map(l => l.trim())
+  let lines = msh-string.split("\n").map(l => l.trim())
   
   let nodes = (:)
   let elements = ()
@@ -35,7 +34,7 @@
       // Node format: node_id x y z
       let parts = line.split(" ").filter(p => p != "")
       if parts.len() >= 4 {
-        let id = parts.at(0)
+        let id = str(int(parts.at(0)))
         let x = float(parts.at(1))
         let y = float(parts.at(2))
         let z = float(parts.at(3))
@@ -47,6 +46,7 @@
       // Element format: elm_id elm_type num_tags <tags> node1 node2 ...
       let parts = line.split(" ").filter(p => p != "")
       if parts.len() >= 3 {
+        let elm-id = int(parts.at(0))
         let elm-type = int(parts.at(1))
         let num-tags = int(parts.at(2))
         let node-start-idx = 3 + num-tags
@@ -64,6 +64,7 @@
         if parts.len() > node-start-idx {
           let node-ids = parts.slice(node-start-idx)
           elements.push((
+            id: elm-id,
             type: elm-type,
             physical-tag: physical-tag,
             geometrical-tag: geometrical-tag,
