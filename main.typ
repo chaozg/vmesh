@@ -12,7 +12,6 @@ Make sure you have generated the `.msh` file using Gmsh's `.msh` 2.2 format with
 The Mesh package allows one to read a `.msh` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
 
 #let mesh-data = read("t4.msh2")
-#let my-colors = ("24": blue.lighten(20%), "22": red.lighten(20%), "3": blue)
 
 #figure(
   draw-mesh(
@@ -32,18 +31,21 @@ The Mesh package allows one to read a `.msh` file and draw it as a Typst figure 
 As we can clearly see in @my-mesh-plot, the mesh has been successfully loaded and rendered. As shown in @my-mesh-plot-2, we can also turn on the display of node and element numbers.
 
 #let mesh-data-2 = read("m1.msh2")
+#let my-colors = ("1": blue.lighten(20%), "2": red.lighten(20%), "3": green.lighten(20%))
+#let my-edges = ("4": 4pt + red, "5": 4pt + purple, "6": 4pt + green)
 
 #figure(
   draw-mesh(
     mesh-data-2,
     width: 5.5cm,
     height: auto,
-    // mesh-stroke: 0.05pt + white,
-    // color-map: my-colors,
+    edge-stroke-map: my-edges,
+    mesh-stroke: 0.05pt + black,
+    color-map: my-colors,
     show-node-numbers: true,
     show-element-numbers: true,
     number-size: 7pt,
     // show-axes: true,
   ),
-  caption: [A demo `.msh` file (`m1.msh2`).],
+  caption: [A demo `.msh` file (`m1.msh2`) with highlighted boundaries.],
 ) <my-mesh-plot-2>

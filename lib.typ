@@ -19,6 +19,7 @@
   mesh-stroke: 0.5pt + white,
   fill-elements: true,
   color-map: default-color-map,
+  edge-stroke-map: (:),
   show-node-numbers: false,
   show-element-numbers: false,
   show-axes: false,
@@ -120,7 +121,8 @@
         let pts = elm-coords.map(c => (c.at(0), c.at(1)))
 
         if elm-type == 1 and pts.len() == 2 {
-          line(..pts, stroke: mesh-stroke)
+          let e-stroke = edge-stroke-map.at(str(domain-id), default: mesh-stroke)
+          line(..pts, stroke: e-stroke)
         } else if (elm-type == 2 and pts.len() == 3) or (elm-type == 3 and pts.len() == 4) {
           line(..pts, close: true, stroke: mesh-stroke, fill: elm-fill)
         }
