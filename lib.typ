@@ -40,6 +40,7 @@
   light-direction: (-0.5, -0.5, 0.707),
   show-node-numbers: false,
   show-element-numbers: false,
+  show-domain-numbers: false,
   show-axes: false,
   number-size: 6pt,
 ) = layout(size => {
@@ -119,37 +120,50 @@
        let pt-y = (w-min-x, w-max-y + len-y * 0.2, w-min-z)
        let pt-z = (w-min-x, w-min-y, w-max-z + len-z * 0.2)
        
+       let pt-x-l = (w-max-x + len-x * 0.25, w-min-y, w-min-z)
+       let pt-y-l = (w-min-x, w-max-y + len-y * 0.25, w-min-z)
+       let pt-z-l = (w-min-x, w-min-y, w-max-z + len-z * 0.25)
+       
        let p-o = project-3d(pt-origin, pitch, yaw)
        
-       let p-x = project-3d(pt-x, pitch, yaw)
-       render-elements.push((
-         depth: (p-o.at(1) + p-x.at(1)) / 2.0,
-         pts: (p-o.at(0), p-x.at(0)),
-         elm-type: "axis",
-         domain-id: 0,
-         elm-fill: red.darken(20%),
-         elm-id: "X"
-       ))
+       if w-max-x - w-min-x > 1e-5 {
+         let p-x = project-3d(pt-x, pitch, yaw)
+         let p-x-l = project-3d(pt-x-l, pitch, yaw)
+         render-elements.push((
+           depth: (p-o.at(1) + p-x.at(1)) / 2.0,
+           pts: (p-o.at(0), p-x.at(0), p-x-l.at(0)),
+           elm-type: "axis",
+           domain-id: 0,
+           elm-fill: red.darken(20%),
+           elm-id: "X"
+         ))
+       }
        
-       let p-y = project-3d(pt-y, pitch, yaw)
-       render-elements.push((
-         depth: (p-o.at(1) + p-y.at(1)) / 2.0,
-         pts: (p-o.at(0), p-y.at(0)),
-         elm-type: "axis",
-         domain-id: 0,
-         elm-fill: green.darken(20%),
-         elm-id: "Y"
-       ))
+       if w-max-y - w-min-y > 1e-5 {
+         let p-y = project-3d(pt-y, pitch, yaw)
+         let p-y-l = project-3d(pt-y-l, pitch, yaw)
+         render-elements.push((
+           depth: (p-o.at(1) + p-y.at(1)) / 2.0,
+           pts: (p-o.at(0), p-y.at(0), p-y-l.at(0)),
+           elm-type: "axis",
+           domain-id: 0,
+           elm-fill: green.darken(20%),
+           elm-id: "Y"
+         ))
+       }
        
-       let p-z = project-3d(pt-z, pitch, yaw)
-       render-elements.push((
-         depth: (p-o.at(1) + p-z.at(1)) / 2.0,
-         pts: (p-o.at(0), p-z.at(0)),
-         elm-type: "axis",
-         domain-id: 0,
-         elm-fill: blue.darken(20%),
-         elm-id: "Z"
-       ))
+       if w-max-z - w-min-z > 1e-5 {
+         let p-z = project-3d(pt-z, pitch, yaw)
+         let p-z-l = project-3d(pt-z-l, pitch, yaw)
+         render-elements.push((
+           depth: (p-o.at(1) + p-z.at(1)) / 2.0,
+           pts: (p-o.at(0), p-z.at(0), p-z-l.at(0)),
+           elm-type: "axis",
+           domain-id: 0,
+           elm-fill: blue.darken(20%),
+           elm-id: "Z"
+         ))
+       }
     }
 
     for elm in elements {
@@ -310,6 +324,41 @@
       }
     }
 
+    if show-domain-numbers {
+      let domain-centers = (:)
+      for elm in elements {
+        let p-tag = elm.physical-tag
+        if p-tag != 0 {
+          let d = str(p-tag)
+          if d not in domain-centers {
+            domain-centers.insert(d, (x: 0.0, y: 0.0, z: 0.0, count: 0))
+          }
+          let dc = domain-centers.at(d)
+          for n-id in elm.nodes {
+            let pt = nodes.at(str(n-id))
+            dc.x += float(pt.at(0))
+            dc.y += float(pt.at(1))
+            dc.z += float(pt.at(2))
+            dc.count += 1
+          }
+          domain-centers.insert(d, dc)
+        }
+      }
+      
+      for (d-id, dc) in domain-centers.pairs() {
+        let center-3d = (dc.x / dc.count, dc.y / dc.count, dc.z / dc.count)
+        let proj = project-3d(center-3d, pitch, yaw)
+        render-elements.push((
+          depth: proj.at(1) + 0.05,
+          pts: (proj.at(0),),
+          elm-type: "domain-label",
+          domain-id: int(d-id),
+          elm-fill: black,
+          elm-id: d-id
+        ))
+      }
+    }
+
     let sorted-elements = render-elements.sorted(key: e => e.depth)
 
     for re in sorted-elements {
@@ -318,9 +367,11 @@
       let domain-id = re.domain-id
       let elm-fill = re.elm-fill
 
-      if elm-type == "axis" {
-        line(..pts, stroke: 1.5pt + elm-fill)
-        content(pts.at(1), text(size: 10pt, fill: elm-fill, weight: "bold")[#re.elm-id])
+      if elm-type == "domain-label" {
+        content(pts.at(0), box(fill: white.transparentize(20%), inset: 2pt, radius: 2pt, text(size: number-size * 1.5, fill: elm-fill, weight: "bold")[#re.elm-id]))
+      } else if elm-type == "axis" {
+        line(pts.at(0), pts.at(1), stroke: 1.5pt + elm-fill)
+        content(pts.at(2), text(size: 10pt, fill: elm-fill, weight: "bold")[#re.elm-id])
       } else if elm-type == 1 and pts.len() == 2 {
         let e-stroke = edge-stroke-map.at(str(domain-id), default: mesh-stroke)
         line(..pts, stroke: e-stroke)
