@@ -12,6 +12,20 @@
   "5": purple.lighten(20%),
 )
 
+#let project-3d(pt, pitch, yaw) = {
+  let (x, y, z) = pt
+  
+  let x1 = x * calc.cos(yaw) - y * calc.sin(yaw)
+  let y1 = x * calc.sin(yaw) + y * calc.cos(yaw)
+  let z1 = z
+  
+  let x2 = x1
+  let y2 = y1 * calc.cos(pitch) - z1 * calc.sin(pitch)
+  let z2 = y1 * calc.sin(pitch) + z1 * calc.cos(pitch)
+  
+  ((x2, y2), z2)
+}
+
 #let draw-mesh(
   msh-string,
   width: auto,
@@ -20,6 +34,8 @@
   fill-elements: true,
   color-map: default-color-map,
   edge-stroke-map: (:),
+  pitch: 0deg,
+  yaw: 0deg,
   show-node-numbers: false,
   show-element-numbers: false,
   show-axes: false,
@@ -29,8 +45,14 @@
   let nodes = mesh-data.nodes
   let elements = mesh-data.elements
 
-  let x-vals = nodes.values().map(n => float(n.at(0)))
-  let y-vals = nodes.values().map(n => float(n.at(1)))
+  let projected-nodes = (:)
+  for (n-id, n-data) in nodes.pairs() {
+    let pt = (float(n-data.at(0)), float(n-data.at(1)), float(n-data.at(2)))
+    projected-nodes.insert(n-id, project-3d(pt, pitch, yaw))
+  }
+
+  let x-vals = projected-nodes.values().map(p => p.at(0).at(0))
+  let y-vals = projected-nodes.values().map(p => p.at(0).at(1))
 
   let min-x = if x-vals.len() > 0 { calc.min(..x-vals) } else { 0.0 }
   let max-x = if x-vals.len() > 0 { calc.max(..x-vals) } else { 1.0 }
@@ -102,6 +124,9 @@
       }
     }
 
+    let render-elements = ()
+    let all-faces = ()
+
     for elm in elements {
       let elm-type = elm.type
       let elm-node-ids = elm.nodes
@@ -115,29 +140,105 @@
         elm-fill = color-map.at(str(domain-id), default: blue.lighten(20%))
       }
 
-      let elm-coords = elm-node-ids.map(id => nodes.at(id, default: none)).filter(c => c != none)
+      if elm-type in (1, 2, 3) {
+         all-faces.push((nodes: elm-node-ids, type: elm-type, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: false))
+      } else if elm-type == 4 and elm-node-ids.len() == 4 { // Tetrahedron
+         let n = elm-node-ids
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(2)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(0), n.at(2), n.at(3)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(0), n.at(3), n.at(1)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(1), n.at(3), n.at(2)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+      } else if elm-type == 5 and elm-node-ids.len() == 8 { // Hexahedron
+         let n = elm-node-ids
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(5), n.at(4)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(1), n.at(2), n.at(6), n.at(5)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(2), n.at(3), n.at(7), n.at(6)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(3), n.at(0), n.at(4), n.at(7)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(2), n.at(3)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(4), n.at(5), n.at(6), n.at(7)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+      } else if elm-type == 6 and elm-node-ids.len() == 6 { // Prism
+         let n = elm-node-ids
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(2)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(3), n.at(4), n.at(5)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(4), n.at(3)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(1), n.at(2), n.at(5), n.at(4)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(2), n.at(0), n.at(3), n.at(5)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+      } else if elm-type == 7 and elm-node-ids.len() == 5 { // Pyramid
+         let n = elm-node-ids
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(2), n.at(3)), type: 3, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(0), n.at(1), n.at(4)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(1), n.at(2), n.at(4)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(2), n.at(3), n.at(4)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+         all-faces.push((nodes: (n.at(3), n.at(0), n.at(4)), type: 2, domain: domain-id, fill: elm-fill, id: elm.id, is-3d: true))
+      }
+    }
 
-      if elm-coords.len() == elm-node-ids.len() and elm-coords.len() > 0 {
-        let pts = elm-coords.map(c => (c.at(0), c.at(1)))
+    let face-meta = (:)
+    let face-data = (:)
 
-        if elm-type == 1 and pts.len() == 2 {
-          let e-stroke = edge-stroke-map.at(str(domain-id), default: mesh-stroke)
-          line(..pts, stroke: e-stroke)
-        } else if (elm-type == 2 and pts.len() == 3) or (elm-type == 3 and pts.len() == 4) {
-          line(..pts, close: true, stroke: mesh-stroke, fill: elm-fill)
-        }
+    for f in all-faces {
+      let sorted-n = f.nodes.sorted()
+      let key = sorted-n.join("-")
+      
+      let meta = face-meta.at(key, default: (count: 0, is-explicit: false))
+      if f.is-3d {
+        meta.count += 1
+      } else {
+        meta.is-explicit = true
+      }
+      face-meta.insert(key, meta)
+      
+      if (not f.is-3d) or (key not in face-data) {
+        face-data.insert(key, (nodes: f.nodes, type: f.type, domain: f.domain, fill: f.fill, id: f.id))
+      }
+    }
 
-        if show-element-numbers {
-          let cx = elm-coords.map(c => c.at(0)).sum() / pts.len()
-          let cy = elm-coords.map(c => c.at(1)).sum() / pts.len()
-          content((cx, cy), text(size: number-size, fill: luma(80), style: "italic")[#elm.id])
+    for (key, meta) in face-meta.pairs() {
+      if meta.is-explicit or meta.count == 1 {
+        let fd = face-data.at(key)
+        let elm-nodes-proj = fd.nodes.map(id => projected-nodes.at(id, default: none)).filter(c => c != none)
+
+        if elm-nodes-proj.len() == fd.nodes.len() and elm-nodes-proj.len() > 0 {
+          let depth = elm-nodes-proj.map(c => c.at(1)).sum() / elm-nodes-proj.len()
+          let pts = elm-nodes-proj.map(c => c.at(0))
+          
+          render-elements.push((
+            depth: depth,
+            pts: pts,
+            elm-type: fd.type,
+            domain-id: fd.domain,
+            elm-fill: fd.fill,
+            elm-id: fd.id
+          ))
         }
       }
     }
 
+    let sorted-elements = render-elements.sorted(key: e => e.depth)
+
+    for re in sorted-elements {
+      let pts = re.pts
+      let elm-type = re.elm-type
+      let domain-id = re.domain-id
+      let elm-fill = re.elm-fill
+
+      if elm-type == 1 and pts.len() == 2 {
+        let e-stroke = edge-stroke-map.at(str(domain-id), default: mesh-stroke)
+        line(..pts, stroke: e-stroke)
+      } else if (elm-type == 2 and pts.len() == 3) or (elm-type == 3 and pts.len() == 4) {
+        line(..pts, close: true, stroke: mesh-stroke, fill: elm-fill)
+      }
+
+      if show-element-numbers {
+        let cx = pts.map(c => c.at(0)).sum() / pts.len()
+        let cy = pts.map(c => c.at(1)).sum() / pts.len()
+        content((cx, cy), text(size: number-size, fill: luma(80), style: "italic")[#re.elm-id])
+      }
+    }
+
     if show-node-numbers {
-      for (n-id, n-data) in nodes.pairs() {
-        content((n-data.at(0), n-data.at(1)), text(size: number-size, fill: black, weight: "bold")[#n-id])
+      for (n-id, n-data) in projected-nodes.pairs() {
+        content(n-data.at(0), text(size: number-size, fill: black, weight: "bold")[#n-id])
       }
     }
   })
