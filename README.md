@@ -25,9 +25,12 @@ Then, import the package and visualize it in your document:
 ```
 
 ## Examples
-[<img src="assets/demo_2d.png" width="200" title="demo 2d" alt="demo 2d"/>](examples/demo.typ)
 
-[<img src="assets/demo_3d.png" width="400" title="3d mesh" alt="3d mesh"/>](examples/demo.typ)
+`vmesh` works with both 2D and 3D meshes.
+
+[<img src="assets/demo_2d.png" width="200" title="2d mesh" alt="2d mesh"/>](examples/demo_2d.typ)
+
+[<img src="assets/demo_3d.png" width="200" title="3d mesh" alt="3d mesh"/>](examples/demo_3d.typ)
 
 ## Configuration / Parameters
 
