@@ -6,7 +6,7 @@
 
 Export your mesh from Gmsh using the version 2.2 format:
 ```bash
-gmsh typst.geo -3 -format msh2 -o typst.msh2
+gmsh typst.geo -2 -format msh2 -o typst.msh2
 ```
 
 Then, import the package and visualize it in your document:
