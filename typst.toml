@@ -1,8 +1,8 @@
 [package]
-name = "mesh"
+name = "vmesh"
 version = "0.1.0"
 entrypoint = "src/lib.typ"
 authors = ["Chao Zhang <chaz@dtu.dk>"]
 license = "MIT"
-description = "A package for parsing and rendering 2D and 3D Gmsh .msh files directly in Typst."
+description = "A package for parsing and visualizing 2D and 3D Gmsh .msh files directly in Typst."
 categories = ["visualization", "engineering"]

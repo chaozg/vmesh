@@ -1,6 +1,6 @@
 <img src="assets/demo_typst.png" width="100" title="demo typst" alt="demo typst"/>
 
-`mesh` is a [Typst](https://github.com/typst/typst) package for rendering [Gmsh](https://gmsh.info/) files.
+`vmesh` is a [Typst](https://github.com/typst/typst) package for visualizing [Gmsh](https://gmsh.info/) files.
 
 ## Usage
 
@@ -9,10 +9,10 @@ Export your mesh from Gmsh using the version 2.2 format:
 gmsh typst.geo -3 -format msh2 -o typst.msh2
 ```
 
-Then, import the package and render it in your document:
+Then, import the package and visualize it in your document:
 
 ```typst
-#import "../src/lib.typ": draw-mesh
+#import "@preview/vmesh:0.1.0": draw-mesh
 
 #let mesh-data = read("assets/typst.msh2")
 

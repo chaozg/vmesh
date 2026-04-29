@@ -11,7 +11,7 @@
 Make sure you have generated the `.msh2` file using Gmsh's 2.2 format with
 \`gmsh typst.geo -2 -format msh2 -o typst.msh2\`.
 
-The Mesh package allows one to read a `.msh2` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
+The vmesh package allows one to read a `.msh2` file and draw it as a Typst figure through CeTZ, with options for customizing the appearance of the mesh.
 
 // #let mesh-data = read("../assets/t4.msh2")
 // #let mesh-data = read("../assets/triangleHole01.msh2")
